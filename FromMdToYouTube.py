@@ -34,6 +34,10 @@ def seleccionar_archivo_markdown():
             nombre_markdown = os.path.basename(ruta)
             print(f"✅ Archivo seleccionado: {ruta_markdown}")
             print(f"📄 Nombre del archivo: {nombre_markdown}")
+            
+            # Esperar confirmación del usuario antes de limpiar y volver al menú
+            input("\n🔄 Pulsa ENTER para volver al menú...")
+            borrar_pantalla()
             break
         else:
             print("❌ La ruta no es válida o el archivo no es .md. Inténtalo de nuevo.")
