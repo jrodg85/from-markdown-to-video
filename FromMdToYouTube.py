@@ -1,8 +1,9 @@
 import os
 import sys
 
-# === Variable global donde se guardará el archivo seleccionado ===
-ruta_markdown = None
+# === Variables globales ===
+ruta_markdown = None       # Ruta completa del archivo seleccionado
+nombre_markdown = None     # Nombre del archivo seleccionado
 
 
 # === Funciones auxiliares ===
@@ -20,17 +21,19 @@ def salir_de_app():
 def seleccionar_archivo_markdown():
     """
     Solicita al usuario una ruta a un archivo .md y valida que exista.
-    Guarda la ruta en memoria global (ruta_markdown).
+    Guarda la ruta y el nombre del archivo en memoria global.
     """
-    global ruta_markdown
+    global ruta_markdown, nombre_markdown
 
     while True:
         ruta = input("Introduce la ruta absoluta del archivo Markdown (.md): ").strip()
         ruta = os.path.abspath(ruta)  # Normalizar
 
-        if os.path.isfile(ruta) and ruta.endswith(".md"):
+        if os.path.isfile(ruta) and ruta.lower().endswith(".md"):
             ruta_markdown = ruta
+            nombre_markdown = os.path.basename(ruta)
             print(f"✅ Archivo seleccionado: {ruta_markdown}")
+            print(f"📄 Nombre del archivo: {nombre_markdown}")
             break
         else:
             print("❌ La ruta no es válida o el archivo no es .md. Inténtalo de nuevo.")
@@ -38,8 +41,9 @@ def seleccionar_archivo_markdown():
 
 def opcion2():
     print("Ejecutando opción 2...")
-    if ruta_markdown:
-        print(f"Trabajando con el archivo cargado: {ruta_markdown}")
+    if ruta_markdown and nombre_markdown:
+        print(f"Trabajando con el archivo: {nombre_markdown}")
+        print(f"Ubicación completa: {ruta_markdown}")
     else:
         print("⚠️ No se ha seleccionado ningún archivo Markdown todavía.")
 
