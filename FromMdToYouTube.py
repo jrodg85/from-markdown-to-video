@@ -88,10 +88,6 @@ async def _tts_edge_guardar(texto: str, salida_mp3: str,
 # === Funciones de las opciones ===
 
 def seleccionar_archivo_markdown():
-    """
-    Solicita al usuario una ruta a un archivo .md y valida que exista.
-    Guarda la ruta y el nombre del archivo en memoria global.
-    """
     global ruta_markdown, nombre_markdown
     while True:
         ruta = input("Introduce la ruta absoluta del archivo Markdown (.md): ").strip()
@@ -101,9 +97,11 @@ def seleccionar_archivo_markdown():
             nombre_markdown = os.path.basename(ruta)
             print(f"✅ Archivo seleccionado: {ruta_markdown}")
             print(f"📄 Nombre del archivo: {nombre_markdown}")
-            return ir_al_menu("\n🔄 Pulsa ENTER para volver al menú...")
+            ir_al_menu("\n🔄 Pulsa ENTER para volver al menú...")
+            return  # <- importante, corta la función después
         else:
             print("❌ La ruta no es válida o el archivo no es .md. Inténtalo de nuevo.")
+
 
 
 # Constantes al inicio
