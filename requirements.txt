@@ -1,1 +1,8 @@
+# Dependencias de Python
 edge-tts>=6.1.0
+moviepy>=1.0.3,<2.0
+Pillow>=10.0.0
+
+# Dependencia externa del sistema (no instalable mediante pip):
+# ffmpeg debe estar disponible en PATH.
+# Ubuntu/Debian: sudo apt install ffmpeg
