@@ -692,7 +692,7 @@ RATE_TTS = "+30%"
 
 def transformar_md_a_mp3() -> tuple[str | None, str | None]:
     """
-    Transformar en MP3 (es-ES, voz femenina, velocidad x1.00).
+    Transformar en MP3 (es-ES, velocidad x1.30; Edge con respaldo Google).
     - Requiere haber seleccionado antes un Markdown.
     - Salida: '<nombre_sin_ext>.mp3' en la misma carpeta.
     - Devuelve (ruta_audio_generado, nombre_audio_generado) o (None, None) si falla.
@@ -700,7 +700,7 @@ def transformar_md_a_mp3() -> tuple[str | None, str | None]:
     """
     global ruta_markdown, nombre_markdown, ruta_audio, nombre_audio
 
-    print("🎙️ Transformar Markdown en MP3 (es-ES, voz femenina, x1.00)")
+    print("🎙️ Transformar Markdown en MP3 (es-ES, x1.30; Edge con respaldo Google)")
 
     if not (ruta_markdown and nombre_markdown):
         print("⚠️ No se ha seleccionado ningún archivo Markdown todavía (opción 1).")
@@ -1049,7 +1049,7 @@ def mostrar_menu():
 Seleccione una opción:
      1 ==> Seleccionar archivo MarkDown.
      2 ==> Mostrar archivo MarkDown seleccionado (nombre y ruta).
-     3 ==> Transformar en MP3 (es-ES, voz femenina, x1.00).
+     3 ==> Transformar en MP3 (es-ES, x1.30; Edge con respaldo Google).
      4 ==> Generar MP3 para TODOS los .md de una carpeta.
      5 ==> Añadir imagen (PNG).
      6 ==> Añadir audio (MP3).
