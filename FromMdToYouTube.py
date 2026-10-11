@@ -71,6 +71,29 @@ def md_a_texto(md: str) -> str:
     md = re.sub(r"\n{3,}", "\n\n", md)
     return md.strip()
 
+def _hay_proveedor_tts() -> bool:
+    """Comprueba si Edge TTS o gTTS están instalados."""
+    import importlib.util
+
+    edge_disponible = importlib.util.find_spec("edge_tts") is not None
+    google_disponible = importlib.util.find_spec("gtts") is not None
+
+    if not edge_disponible and not google_disponible:
+        print("❌ No hay ningún proveedor TTS instalado.")
+        print("   Instala alguno: python -m pip install edge-tts gTTS")
+        return False
+
+    if not edge_disponible:
+        print("ℹ️ Edge TTS no está instalado; se utilizará Google.")
+
+    if not google_disponible:
+        print("⚠️ gTTS no está instalado; no habrá respaldo si Edge falla.")
+        print("   Instálalo con: python -m pip install gTTS")
+
+    return True
+
+
+
 async def _tts_edge_guardar(
     texto: str,
     salida_mp3: str,
@@ -329,11 +352,7 @@ def _generar_mp3_para_markdown(ruta_md: str, voice: str, rate: str, sobrescribir
         print(f"   ⏭️ [{base_sin_ext}] MP3 ya existe. Saltando (usa sobrescribir=True para regenerar).")
         return True, ruta_mp3
 
-    try:
-        # Probamos import aquí para fallar pronto si falta la dependencia
-        import edge_tts  # noqa: F401
-    except ImportError:
-        print("❌ Falta la dependencia 'edge-tts'. Instálala con: pip install edge-tts")
+    if not _hay_proveedor_tts():
         return False, ""
 
     try:
@@ -727,11 +746,7 @@ def transformar_md_a_mp3() -> tuple[str | None, str | None]:
     directorio = os.path.dirname(ruta_markdown)
     ruta_audio_generado = os.path.join(directorio, nombre_audio_generado)
 
-    try:
-        import edge_tts
-    except ImportError:
-        print("❌ Falta la dependencia 'edge-tts'.")
-        print("   Instálala en tu entorno con: pip install edge-tts")
+    if not _hay_proveedor_tts():
         ir_al_menu()
         return None, None
 
