@@ -71,33 +71,106 @@ def md_a_texto(md: str) -> str:
     md = re.sub(r"\n{3,}", "\n\n", md)
     return md.strip()
 
-async def _tts_edge_guardar(texto: str, salida_mp3: str,
-                            voz: str = "es-ES-ElviraNeural",
-                            rate: str = "+30%"):
+async def _tts_edge_guardar(
+    texto: str,
+    salida_mp3: str,
+    voz: str = "es-ES-ElviraNeural",
+    rate: str = "+30%"
+):
     """
-    Usa edge-tts para sintetizar 'texto' en 'salida_mp3' con voz y rate dados.
+    Intenta generar el audio con Edge TTS (Elvira).
+    Si falla, utiliza Google Translate (gTTS).
+
+    Aplica la velocidad indicada a ambos proveedores:
+    Edge la aplica directamente y gTTS mediante FFmpeg.
+
+    Solo reemplaza el MP3 de destino cuando la generación
+    termina correctamente. Limpia los temporales incluso si falla.
     """
-    import edge_tts
+    if not texto.strip():
+        raise ValueError("No hay texto para generar audio.")
 
-    # edge-tts admite textos largos, pero es buena práctica trocear si fuera necesario
-    # para evitar limites; aquí troceamos a ~10000 caracteres por seguridad.
-    trozo_max = 10000
-    fragmentos = []
-    inicio = 0
-    while inicio < len(texto):
-        fin = min(inicio + trozo_max, len(texto))
-        fragmentos.append(texto[inicio:fin])
-        inicio = fin
+    velocidad = 1.0 + float(rate.rstrip("%")) / 100.0
+    if not 0.5 <= velocidad <= 2.0:
+        raise ValueError("La velocidad debe estar entre x0.5 y x2.0.")
 
-    # Guardamos acumulando en un fichero temporal y luego en MP3 final directo
-    # Nota: edge-tts permite save() por cada Communicate; concatenar múltiples
-    # MP3 no es trivial, así que mandamos el texto completo cuando sea posible.
-    # Para garantizar robustez, si hay múltiples fragmentos, los unimos con saltos.
-    if len(fragmentos) > 1:
-        texto = "\n\n".join(fragmentos)
+    directorio = os.path.dirname(os.path.abspath(salida_mp3))
 
-    communicate = edge_tts.Communicate(texto, voice=voz, rate=rate)
-    await communicate.save(salida_mp3)
+    with tempfile.TemporaryDirectory(dir=directorio) as temporal:
+        salida_temporal = os.path.join(temporal, "resultado.mp3")
+
+        # Primer intento: Edge TTS aplica la velocidad directamente.
+        try:
+            import edge_tts
+
+            print(f"🎙️ Probando Edge TTS: {voz}, x{velocidad:.2f}")
+            communicate = edge_tts.Communicate(
+                texto, voice=voz, rate=rate
+            )
+            await communicate.save(salida_temporal)
+
+            if os.path.getsize(salida_temporal) == 0:
+                raise RuntimeError("Edge TTS ha generado un MP3 vacío.")
+
+        except Exception as error_edge:
+            print(
+                f"⚠️ Edge TTS ha fallado "
+                f"({type(error_edge).__name__}). Probando Google..."
+            )
+
+            # Segundo intento: gTTS genera a velocidad normal;
+            # FFmpeg acelera el audio conservando el tono.
+            def generar_google():
+                from gtts import gTTS
+
+                original = os.path.join(temporal, "google_original.mp3")
+                gTTS(
+                    text=texto,
+                    lang="es",
+                    tld="es",
+                    slow=False
+                ).save(original)
+
+                subprocess.run(
+                    [
+                        FFMPEG_BIN, "-y",
+                        "-hide_banner", "-loglevel", "error",
+                        "-i", original,
+                        "-filter:a", f"atempo={velocidad}",
+                        "-codec:a", "libmp3lame", "-b:a", "128k",
+                        salida_temporal
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True
+                )
+
+                if os.path.getsize(salida_temporal) == 0:
+                    raise RuntimeError("Google/FFmpeg ha generado un MP3 vacío.")
+
+            try:
+                print(f"🎙️ Google Translate: español de España, x{velocidad:.2f}")
+                await asyncio.to_thread(generar_google)
+
+            except FileNotFoundError as e:
+                raise RuntimeError(
+                    "El respaldo con Google ha fallado: comprueba "
+                    "que FFmpeg esté instalado y la carpeta exista."
+                ) from e
+
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(
+                    f"FFmpeg ha fallado: {(e.stderr or '').strip()}"
+                ) from e
+
+            except Exception as e:
+                raise RuntimeError(
+                    f"Ambos proveedores han fallado. "
+                    f"Edge: {error_edge}. Google: {e}"
+                ) from e
+
+        # Conservar el archivo anterior hasta tener el nuevo completo.
+        os.replace(salida_temporal, salida_mp3)
 
 
 
@@ -615,7 +688,7 @@ def mostrar_markdown_actual():
 # Constantes al inicio
 
 VOZ_TTS = "es-ES-ElviraNeural"
-RATE_TTS = "+00%"
+RATE_TTS = "+30%"
 
 def transformar_md_a_mp3() -> tuple[str | None, str | None]:
     """
