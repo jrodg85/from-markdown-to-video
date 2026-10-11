@@ -1,5 +1,6 @@
 # Dependencias de Python
 edge-tts>=6.1.0
+gTTS
 moviepy>=1.0.3,<2.0
 Pillow>=10.0.0
 
